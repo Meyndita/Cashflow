@@ -2,11 +2,10 @@ package com.dhanifudin.cashflow;
 
 import android.content.Intent;
 import android.os.Bundle;
-
-import com.dhanifudin.cashflow.adapters.TransactionAdapter;
-import com.dhanifudin.cashflow.models.Account;
-import com.dhanifudin.cashflow.models.Transaction;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -16,10 +15,11 @@ import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import android.view.View;
-import android.view.Menu;
-import android.view.MenuItem;
-import android.widget.TextView;
+import com.dhanifudin.cashflow.adapters.TransactionAdapter;
+import com.dhanifudin.cashflow.models.Account;
+import com.dhanifudin.cashflow.models.Session;
+import com.dhanifudin.cashflow.models.Transaction;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.text.NumberFormat;
 import java.util.Locale;
@@ -37,6 +37,7 @@ public class MainActivity extends AppCompatActivity
     private RecyclerView transactionsView;
     private TransactionAdapter adapter;
     private Account account;
+    private Session session;
 
     // format tampilan untuk nilai uang
     Locale localeID = new Locale("in", "ID");
@@ -48,19 +49,26 @@ public class MainActivity extends AppCompatActivity
         setContentView(R.layout.activity_main);
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+        session = Application.getSession();
 
         welcomeText = findViewById(R.id.text_welcome);
         balanceText = findViewById(R.id.text_balance);
         transactionsView = findViewById(R.id.rv_transactions);
 
+        if (!session.isLoggedIn()) {
+            Intent intent = new Intent(this, LoginActivity.class);
+            startActivity(intent);
+            finish();
+        }
+
         FloatingActionButton fab = findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                // TODO: Tambahkan event click fab di sini
                 Intent intent = new Intent(MainActivity.this, SaveActivity.class);
                 intent.putExtra(TRANSACTION_KEY, new Transaction());
                 startActivityForResult(intent, INSERT_REQUEST);
+                // TODO: Tambahkan event click fab di sini
             }
         });
         ItemTouchHelper.SimpleCallback simpleItemTouchCallback = new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT) {
@@ -107,6 +115,14 @@ public class MainActivity extends AppCompatActivity
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
+            Intent intent = new Intent(this, SettingsActivity.class);
+            startActivity(intent);
+            return true;
+        } else if (id == R.id.action_logout) {
+            session.logout();
+            Intent intent = new Intent(this, LoginActivity.class);
+            startActivity(intent);
+            finish();
             return true;
         }
 
@@ -135,6 +151,13 @@ public class MainActivity extends AppCompatActivity
             adapter.notifyDataSetChanged();
             balanceText.setText(formatRupiah.format(account.getBalance()));
         }
+    }
+
+    public void handleLogout(MenuItem item) {
+        Intent intent = new Intent(this, LoginActivity.class);
+        session.logout();
+        startActivity(intent);
+
     }
 }
 
